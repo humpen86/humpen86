@@ -1,0 +1,53 @@
+function TOEinZMGGroup {
+    param (
+        [Parameter(Mandatory)]
+		[string] $user
+    )
+    $output = @()
+    $i = 0
+    $ErrorActionPreference = "SilentlyContinue"
+    $sid = Get-ADUser $user -Server NTSATDC01
+    Write-Host -ForegroundColor Red $sid.Name
+    Write-Host ""
+    $groups = Get-ADGroup -Filter *
+    foreach ($group in $groups) {
+        $i++  
+        Write-Progress -Activity "Gruppen werden durchsucht" -CurrentOperation $group -Status "Gruppe $i von $($groups.count) durchsucht" -PercentComplete (($i / $groups.count) * 100)
+        $member = Get-ADGroupMember -Identity $group
+        if($member.sid -eq $sid.sid){
+            $output += $group.name
+            $group.Name
+        } else {}
+    }
+    $output | Out-GridView
+    Read-Host -Prompt "Press Enter to exit"
+}
+
+
+
+function ZMGinTOEGroup {
+    param (
+        OptionalParameters
+    )
+    $output = @()
+    $i = 0
+    $ErrorActionPreference = "SilentlyContinue"
+    $user = Read-Host "User: " 
+    $sid = Get-ADUser $user
+    Write-Host -ForegroundColor Red $sid.Name
+    Write-Host ""
+    $groups = Get-ADGroup -Filter * -Server NTSATDC01
+    foreach ($group in $groups) {
+        $i++  
+        Write-Progress -Activity "Gruppen werden durchsucht" -CurrentOperation $group -Status "Gruppe $i von $($groups.count) durchsucht" -PercentComplete (($i / $groups.count) * 100)
+        $members = (Get-ADGroup -Identity $group -Server NTSATDC01 -Properties Member).Member       
+        foreach($member in $members){
+            if($member -match $sid.sid.value){
+                $output += $group.name
+                $group.Name
+            } else {}
+        }
+    }
+    $output | Out-GridView
+    Read-Host -Prompt "Press Enter to exit"
+}
